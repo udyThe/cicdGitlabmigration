@@ -1,0 +1,188 @@
+stages:
+  - sonarqube
+  - build
+  - test
+  - security
+  - deploy
+
+variables:
+  NODE_VERSION: "18"
+  NPM_CONFIG_CACHE: "$CI_PROJECT_DIR/.npm"
+
+# Cache node modules to speed up builds
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+    - .npm/
+    - .sonar/cache
+
+# SonarQube Quality Gate - Runs first and blocks pipeline if fails
+sonarqube-check:
+  stage: sonarqube
+  image: 
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"  # Tells git to fetch all the history for better analysis
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+      -Dsonar.qualitygate.wait=true
+      -Dsonar.projectKey=${CI_PROJECT_NAME}
+      -Dsonar.sources=.
+      -Dsonar.host.url=${SONAR_HOST_URL}
+      -Dsonar.login=${SONAR_TOKEN}
+  allow_failure: false  # Pipeline fails if quality gate fails
+  only:
+    - merge_requests
+    - main
+    - develop
+  tags:
+    - docker
+
+# Build stage
+build:
+  stage: build
+  image: node:${NODE_VERSION}
+  needs: ["sonarqube-check"]  # Only run if SonarQube passes
+  script:
+    - echo "Installing dependencies..."
+    - npm ci
+    - echo "Build completed successfully"
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+  tags:
+    - docker
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Test stage - Run on multiple Node versions
+.test_template: &test_template
+  stage: test
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Running tests on Node ${NODE_VERSION}..."
+    - npm ci
+    - npm run lint
+    - npm test
+  artifacts:
+    reports:
+      junit: test-results.xml
+    paths:
+      - coverage/
+    expire_in: 1 week
+  tags:
+    - docker
+
+test:node-16:
+  <<: *test_template
+  image: node:16
+  only:
+    - main
+    - develop
+    - merge_requests
+
+test:node-18:
+  <<: *test_template
+  image: node:18
+  only:
+    - main
+    - develop
+    - merge_requests
+
+test:node-20:
+  <<: *test_template
+  image: node:20
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# Security scanning
+security:audit:
+  stage: security
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Running security audit..."
+    - npm audit --audit-level=moderate || true
+    - echo "Security scan completed"
+  allow_failure: true
+  only:
+    - main
+    - develop
+    - merge_requests
+  tags:
+    - docker
+
+security:dependency-scan:
+  stage: security
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Scanning dependencies for vulnerabilities..."
+    - npm outdated || true
+    - echo "Dependency scan completed"
+  allow_failure: true
+  only:
+    - main
+    - develop
+  tags:
+    - docker
+
+# Deploy to staging
+deploy:staging:
+  stage: deploy
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Deploying to staging environment..."
+    - echo "Application URL would be https://staging.example.com"
+    - echo "Deployment completed successfully"
+  environment:
+    name: staging
+    url: https://staging.example.com
+  only:
+    - develop
+  tags:
+    - docker
+  when: manual
+
+# Deploy to production
+deploy:production:
+  stage: deploy
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Deploying to production environment..."
+    - echo "Application URL would be https://production.example.com"
+    - echo "Deployment completed successfully"
+  environment:
+    name: production
+    url: https://production.example.com
+  only:
+    - main
+  tags:
+    - docker
+  when: manual
+  needs:
+    - test:node-18
+    - security:audit
+
+# Job to run on schedule (daily)
+scheduled:maintenance:
+  stage: test
+  image: node:${NODE_VERSION}
+  script:
+    - echo "Running scheduled maintenance tasks..."
+    - npm audit
+    - npm outdated
+  only:
+    - schedules
+  tags:
+    - docker

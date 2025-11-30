@@ -1,0 +1,17 @@
+{
+  "name": "sample-nodejs-app",
+  "version": "1.0.0",
+  "description": "A sample Node.js application for GitHub to GitLab migration demo",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "node test.js",
+    "lint": "echo 'Running linter...' && exit 0"
+  },
+  "keywords": ["demo", "cicd", "migration"],
+  "author": "Demo",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
