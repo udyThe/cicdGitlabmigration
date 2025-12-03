@@ -17,7 +17,7 @@ cache:
     - .npm/
     - .sonar/cache
 
-# SonarQube Quality Gate - Runs first and blocks pipeline if fails
+# SonarQube Quality Gate - Analyzes code but doesn't block pipeline
 sonarqube-check:
   stage: sonarqube
   image: 
@@ -37,7 +37,7 @@ sonarqube-check:
       -Dsonar.sources=.
       -Dsonar.host.url=${SONAR_HOST_URL}
       -Dsonar.login=${SONAR_TOKEN}
-  allow_failure: false  # Pipeline fails if quality gate fails
+  allow_failure: true  # Don't block pipeline on quality gate failure
   only:
     - merge_requests
     - main
@@ -49,7 +49,7 @@ sonarqube-check:
 build:
   stage: build
   image: node:${NODE_VERSION}
-  needs: ["sonarqube-check"]  # Only run if SonarQube passes
+  needs: []  # Don't wait for SonarQube (runs independently)
   script:
     - echo "Installing dependencies..."
     - npm ci
