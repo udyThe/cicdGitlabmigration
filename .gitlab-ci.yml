@@ -41,8 +41,6 @@ sonarqube-check:
     - merge_requests
     - main
     - develop
-  tags:
-    - docker
 
 # Build stage
 build:
@@ -57,8 +55,6 @@ build:
     paths:
       - node_modules/
     expire_in: 1 hour
-  tags:
-    - docker
   only:
     - main
     - develop
@@ -79,8 +75,6 @@ build:
     paths:
       - coverage/
     expire_in: 1 week
-  tags:
-    - docker
 
 test:node-16:
   <<: *test_template
@@ -119,8 +113,6 @@ security:audit:
     - main
     - develop
     - merge_requests
-  tags:
-    - docker
 
 security:dependency-scan:
   stage: security
@@ -133,8 +125,6 @@ security:dependency-scan:
   only:
     - main
     - develop
-  tags:
-    - docker
 
 # Deploy to staging
 deploy:staging:
@@ -149,8 +139,6 @@ deploy:staging:
     url: https://staging.example.com
   only:
     - develop
-  tags:
-    - docker
   when: manual
 
 # Deploy to production
@@ -166,8 +154,6 @@ deploy:production:
     url: https://production.example.com
   only:
     - main
-  tags:
-    - docker
   when: manual
   needs:
     - test:node-18
@@ -183,5 +169,3 @@ scheduled:maintenance:
     - npm outdated
   only:
     - schedules
-  tags:
-    - docker
