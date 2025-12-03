@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "node test.js",
+    "test": "c8 --reporter=lcov --reporter=text node test.js",
+    "test:unit": "node test.js",
     "lint": "echo 'Running linter...' && exit 0"
   },
   "keywords": ["demo", "cicd", "migration"],
@@ -13,5 +14,8 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "c8": "^8.0.1"
   }
 }
