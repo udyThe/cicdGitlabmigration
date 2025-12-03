@@ -4,6 +4,9 @@ const { calculateSum, calculateProduct } = require('./utils');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security: Disable X-Powered-By header to hide Express version
+app.disable('x-powered-by');
+
 app.use(express.json());
 
 // Health check endpoint
