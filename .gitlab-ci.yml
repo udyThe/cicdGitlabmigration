@@ -17,7 +17,7 @@ cache:
     - .npm/
     - .sonar/cache
 
-# SonarQube Quality Gate - Analyzes code but doesn't block pipeline
+# SonarQube Quality Gate - Blocks on critical issues (bugs, vulnerabilities)
 sonarqube-check:
   stage: sonarqube
   image: 
@@ -37,7 +37,7 @@ sonarqube-check:
       -Dsonar.sources=.
       -Dsonar.host.url=${SONAR_HOST_URL}
       -Dsonar.login=${SONAR_TOKEN}
-  allow_failure: true  # Don't block pipeline on quality gate failure
+  allow_failure: false  # Block on security issues, bugs, vulnerabilities
   only:
     - merge_requests
     - main
@@ -49,7 +49,7 @@ sonarqube-check:
 build:
   stage: build
   image: node:${NODE_VERSION}
-  needs: []  # Don't wait for SonarQube (runs independently)
+  needs: ["sonarqube-check"]  # Wait for security scan
   script:
     - echo "Installing dependencies..."
     - npm ci

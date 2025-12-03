@@ -47,11 +47,12 @@ jobs:
     - name: SonarQube Quality Gate Check
       uses: sonarsource/sonarqube-quality-gate-action@v1  # v1.1.0
       timeout-minutes: 5
-      continue-on-error: true  # Don't block pipeline on quality gate failure
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         scanMetadataReportFile: .scannerwork/report-task.txt
+      # Note: Quality gate will fail on bugs/vulnerabilities but not just coverage
+      # Configure this in SonarCloud Quality Gate settings
 
   build-and-test:
     runs-on: ubuntu-latest
