@@ -1,5 +1,8 @@
 const { calculateSum, calculateProduct, calculateFactorial } = require('./utils');
 
+// Check if running with coverage
+const withCoverage = process.env.NYC_CONFIG || process.argv.includes('--coverage');
+
 // Simple test framework
 let passedTests = 0;
 let failedTests = 0;
